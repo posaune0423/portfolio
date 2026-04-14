@@ -54,7 +54,7 @@ function project3D(angle: number, radius: number, rotX: number, rotY: number): {
 
 export default function OrbRing({ compact = false }: { compact?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
+  const rafRef = useRef(0);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;

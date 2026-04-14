@@ -1,14 +1,12 @@
 import { cloudflare } from "@cloudflare/vite-plugin";
 import vinext from "vinext";
-import { defineConfig } from "vite-plus";
 
-export default defineConfig({
-  plugins: [
-    vinext(),
-    cloudflare({
-      viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
-    }),
-  ],
+const plugins: unknown[] = [];
+plugins.push(...vinext());
+plugins.push(...cloudflare({ viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] } }));
+
+export default {
+  plugins,
 
   server: {
     host: true,
@@ -160,4 +158,4 @@ export default defineConfig({
   staged: {
     "*.{js,ts,tsx}": "vp check --fix",
   },
-});
+};

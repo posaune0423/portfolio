@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     url: siteUrl,
     images: [
       {
-        url: "/opengraph-image.jpg",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: siteName,
@@ -64,21 +64,15 @@ const googleAnalyticsBootstrap = `
   gtag("config", "${gaMeasurementId}");
 `;
 
-// AppShell manages all screen rendering; children is accepted only to satisfy
-// the Next.js/Vinext layout signature and is intentionally unused.
+// Vinext injects route/page metadata through the layout children tree, so the
+// null page routes still need children rendered even though AppShell owns the UI.
 export default function RootLayout({
-  children: _children,
+  children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
     <html lang="en">
-      <head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
-        />
-      </head>
       <body>
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`} strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
@@ -87,6 +81,7 @@ export default function RootLayout({
         <LanguageProvider>
           <AppShell />
           <BackButton />
+          {children}
         </LanguageProvider>
       </body>
     </html>

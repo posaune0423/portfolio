@@ -1,15 +1,9 @@
 import assert from "node:assert/strict";
 
-import React from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, test } from "vite-plus/test";
 
-import { LanguageProvider, useLanguage } from "../../src/lib/language-context";
-
-function CurrentLabel() {
-  const { t } = useLanguage();
-  return React.createElement("span", null, t("browser.memoryCardWork"));
-}
+import { useAppStore } from "../../src/lib/app-store";
+import { translate } from "../../src/lib/i18n";
 
 const originalWindow = globalThis.window;
 const originalDocument = globalThis.document;
@@ -27,6 +21,11 @@ afterEach(() => {
   setGlobalValue("window", originalWindow);
   setGlobalValue("document", originalDocument);
   setGlobalValue("localStorage", originalLocalStorage);
+  useAppStore.setState({
+    locale: "ja",
+    soundEnabled: true,
+    settingsHydrated: false,
+  });
 });
 
 test("LanguageProvider keeps the first client render aligned with SSR even when english is stored", () => {
@@ -34,9 +33,13 @@ test("LanguageProvider keeps the first client render aligned with SSR even when 
   setGlobalValue("document", undefined);
   setGlobalValue("localStorage", undefined);
 
-  const serverMarkup = renderToStaticMarkup(
-    React.createElement(LanguageProvider, null, React.createElement(CurrentLabel)),
-  );
+  useAppStore.setState({
+    locale: "ja",
+    soundEnabled: true,
+    settingsHydrated: false,
+  });
+
+  const serverLabel = translate(useAppStore.getState().locale, "browser.memoryCardWork");
 
   const storage = {
     getItem(key: string) {
@@ -54,10 +57,13 @@ test("LanguageProvider keeps the first client render aligned with SSR even when 
   setGlobalValue("window", { localStorage: storage });
   setGlobalValue("localStorage", storage);
 
-  const clientFirstMarkup = renderToStaticMarkup(
-    React.createElement(LanguageProvider, null, React.createElement(CurrentLabel)),
-  );
+  const clientFirstLabel = translate(useAppStore.getState().locale, "browser.memoryCardWork");
 
-  assert.equal(serverMarkup, "<span>メモリーカード (work)</span>");
-  assert.equal(clientFirstMarkup, serverMarkup);
+  assert.equal(serverLabel, "メモリーカード (work)");
+  assert.equal(clientFirstLabel, serverLabel);
+
+  useAppStore.getState().hydrateSettings();
+
+  assert.equal(useAppStore.getState().locale, "en");
+  assert.equal(translate(useAppStore.getState().locale, "browser.memoryCardWork"), "Memory Card (work)");
 });

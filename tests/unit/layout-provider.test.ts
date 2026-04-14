@@ -15,13 +15,16 @@ test("root layout mounts the persistent app shell and back button at the app bou
   assert.match(layoutSource, /import BackButton from "\.\.\/components\/shared\/back-button"/);
 });
 
-test("root layout keeps the app shell and back button inside the language provider without rendering route children", () => {
-  assert.match(layoutSource, /<LanguageProvider>\s*<AppShell \/>\s*<BackButton \/>\s*<\/LanguageProvider>/);
-  assert.doesNotMatch(layoutSource, /\{children\}/);
+test("root layout keeps the app shell and back button inside the language provider while rendering route children", () => {
+  assert.match(
+    layoutSource,
+    /<LanguageProvider>\s*<AppShell \/>\s*<BackButton \/>\s*\{children\}\s*<\/LanguageProvider>/,
+  );
 });
 
 test("root layout no longer opts into native document view transitions", () => {
-  assert.match(layoutSource, /<head>/);
+  assert.match(layoutSource, /export const viewport: Viewport = \{/);
+  assert.doesNotMatch(layoutSource, /<head>/);
   assert.doesNotMatch(layoutSource, /name="view-transition"/);
 });
 

@@ -15,8 +15,6 @@ Load `docs/` as project memory at session start or when context is needed.
 - **Task memory**: `.agents/memory/todo.md`, `.agents/memory/lessons.md`
 - **Other docs**: Add or manage as needed (domain-specific .md)
 
-Use steering to align decisions with product goals, tech stack, and structure.
-
 ---
 
 ## Workflow Orchestration
