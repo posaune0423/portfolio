@@ -82,6 +82,24 @@ export default function RootLayout({
           <AppShell />
           <BackButton />
           {children}
+          <div
+            data-testid="build-badge"
+            style={{
+              position: "fixed",
+              right: 12,
+              bottom: 12,
+              zIndex: 9999,
+              padding: "4px 10px",
+              borderRadius: 9999,
+              border: "1px solid rgba(255,255,255,0.4)",
+              background: "rgba(0,0,0,0.55)",
+              color: "#fff",
+              font: "600 11px/1.4 ui-monospace, monospace",
+              letterSpacing: "0.14em",
+            }}
+          >
+            PREVIEW BUILD
+          </div>
         </LanguageProvider>
       </body>
     </html>
