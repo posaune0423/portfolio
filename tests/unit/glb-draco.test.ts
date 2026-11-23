@@ -8,6 +8,7 @@ const MAX_UNCOMPRESSED_GLB_BYTES = 64 * 1024;
 const GLB_PATHS = [
   "../../public/3d/memorycard.glb",
   "../../public/3d/icons/cd.glb",
+  "../../public/3d/work/luster.glb",
   "../../public/3d/work/velvett.glb",
   "../../public/3d/work/dena.glb",
   "../../public/3d/work/daiko.glb",

@@ -7,6 +7,15 @@ import type { GridItem } from "@/components/shared/item-grid";
 
 const WORK_ITEMS: GridItem[] = [
   {
+    id: "luster",
+    label: "Luster Finance",
+    modelPath: "/3d/work/luster.glb",
+    href: "https://luster.finance",
+    description: "Tokenizing rare coins: authenticated, vaulted coins traded as individual NFTs or fractional tokens.",
+    tags: ["RWA", "NFT", "Cloudflare Workers"],
+    period: "2026 –",
+  },
+  {
     id: "velvett",
     label: "Velvett",
     modelPath: "/3d/work/velvett.glb",
