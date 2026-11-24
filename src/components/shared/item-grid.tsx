@@ -12,6 +12,7 @@ import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
 import type { ActiveIndexScreenId } from "@/lib/app-screen";
+import { clampFrameDelta } from "@/lib/frame-delta";
 import { navigate } from "@/lib/navigate";
 
 export interface GridItem {
@@ -230,9 +231,10 @@ const GridItemModel = memo(function GridItemModel({
   useFrame((_, delta) => {
     const group = groupRef.current;
     if (!group) return;
+    const step = clampFrameDelta(delta);
 
     if (!settledRef.current) {
-      elapsed.current += delta;
+      elapsed.current += step;
       const t = Math.min(1, Math.max(0, (elapsed.current - delay) / ANIM_DURATION));
       const eased = easeOutCubic(t);
 
@@ -240,7 +242,7 @@ const GridItemModel = memo(function GridItemModel({
       group.scale.setScalar(eased);
 
       if (!modelPath && meshRef.current) {
-        meshRef.current.rotation.y += delta * 0.5;
+        meshRef.current.rotation.y += step * 0.5;
       }
 
       if (t < 1 || !modelPath) {
@@ -252,7 +254,7 @@ const GridItemModel = memo(function GridItemModel({
     }
 
     if (selectionPhase === "selecting" && isSelected) {
-      selectionElapsed.current += delta;
+      selectionElapsed.current += step;
       const t = Math.min(1, selectionElapsed.current / DETAIL_ANIM_DURATION);
       const eased = easeInOutCubic(t);
 
@@ -269,7 +271,7 @@ const GridItemModel = memo(function GridItemModel({
     }
 
     if (selectionPhase === "deselecting" && isSelected) {
-      selectionElapsed.current += delta;
+      selectionElapsed.current += step;
       const t = Math.min(1, selectionElapsed.current / DETAIL_ANIM_DURATION);
       const eased = easeInOutCubic(t);
 
@@ -289,14 +291,14 @@ const GridItemModel = memo(function GridItemModel({
       group.position.set(...detailPosition);
       group.scale.setScalar(detailScale);
       if (!modelPath && meshRef.current) {
-        meshRef.current.rotation.y += delta * 0.3;
+        meshRef.current.rotation.y += step * 0.3;
         invalidate();
       }
       return;
     }
 
     if (!modelPath && meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.5;
+      meshRef.current.rotation.y += step * 0.5;
       invalidate();
     }
   });
