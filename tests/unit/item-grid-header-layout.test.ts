@@ -26,7 +26,10 @@ test("right header label is right-aligned on a single line", () => {
 test("grid header lays both titles out in one vertically centered row so they never overlap", () => {
   assert.match(itemGridSource, /function getGridHeaderStyle\(compact: boolean\): React\.CSSProperties \{/);
   assert.match(itemGridSource, /display: "flex",\s*alignItems: "center",\s*justifyContent: "space-between",/);
-  assert.match(itemGridSource, /style=\{\{ \.\.\.getGridHeaderStyle\(compact\), display: showGrid \? "flex" : "none" \}\}/);
+  assert.match(
+    itemGridSource,
+    /style=\{\{ \.\.\.getGridHeaderStyle\(compact\), display: showGrid \? "flex" : "none" \}\}/,
+  );
   assert.match(itemGridSource, /minWidth: 0,\s*overflow: "hidden",\s*textOverflow: "ellipsis",/);
   assert.doesNotMatch(itemGridSource, /top: "clamp\(12px, 3vh, 32px\)"/);
 });
