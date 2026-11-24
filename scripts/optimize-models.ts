@@ -4,8 +4,10 @@
  * - Draco -> EXT_meshopt_compression (decodes synchronously from the bundled decoder,
  *   no CDN fetch for the Draco WASM decoder)
  * - Removes flat (constant) normal maps, which contribute nothing visually
- * - Simplifies meshes within a visually lossless error bound
  * - Re-encodes textures as WebP at most 1024px (models render far smaller than that)
+ *
+ * Meshes are intentionally not simplified: even a 0.01% error bound breaks the shading on the
+ * sculpted SNS logo meshes (visible speckles on LinkedIn / X), so geometry stays lossless.
  *
  * Already optimized files (using EXT_meshopt_compression) are skipped, so the script is idempotent.
  *
@@ -17,16 +19,14 @@ import { join } from "node:path";
 import type { Document, Texture } from "@gltf-transform/core";
 import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
-import { dedup, meshopt, prune, simplify, textureCompress, weld } from "@gltf-transform/functions";
+import { dedup, meshopt, prune, textureCompress } from "@gltf-transform/functions";
 import draco3d from "draco3dgltf";
-import { MeshoptDecoder, MeshoptEncoder, MeshoptSimplifier } from "meshoptimizer";
+import { MeshoptDecoder, MeshoptEncoder } from "meshoptimizer";
 import sharp from "sharp";
 
 const MODEL_ROOT = "public/3d";
 const MAX_TEXTURE_SIZE = 1024;
 const WEBP_QUALITY = 90;
-/** Simplification error relative to mesh extent (0.01%), below one pixel at any render size used. */
-const SIMPLIFY_ERROR = 0.0001;
 const FLAT_STDEV_THRESHOLD = 0.5;
 
 function listModels(dir: string): string[] {
@@ -66,8 +66,6 @@ const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies(
   "meshopt.encoder": MeshoptEncoder,
 });
 
-await MeshoptSimplifier.ready;
-
 const targets = process.argv.length > 2 ? process.argv.slice(2) : listModels(MODEL_ROOT);
 
 for (const path of targets) {
@@ -87,8 +85,6 @@ for (const path of targets) {
   await document.transform(
     dedup(),
     prune(),
-    weld(),
-    simplify({ simplifier: MeshoptSimplifier, ratio: 0, error: SIMPLIFY_ERROR }),
     textureCompress({
       encoder: sharp,
       targetFormat: "webp",

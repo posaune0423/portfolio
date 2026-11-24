@@ -5,7 +5,8 @@ import { test } from "vite-plus/test";
 
 import { WARMUP_ASSET_PATHS } from "../../src/lib/app-screen";
 
-const MAX_GLB_BYTES = 2 * 1024 * 1024;
+/** Geometry stays lossless (simplification breaks SNS logo shading), so the budget covers full-detail meshes. */
+const MAX_GLB_BYTES = 3 * 1024 * 1024;
 const MAX_TEXTURE_SIZE = 1024;
 const WEBP_14BIT_MASK = (1 << 14) - 1;
 
