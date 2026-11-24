@@ -21,6 +21,7 @@ export const SCREEN_ASSETS: Record<AppScreenId, readonly string[]> = {
   browser: ["/3d/memorycard.glb", "/3d/icons/cd.glb"],
   memoryWork: [
     "/3d/memorycard.glb",
+    "/3d/work/luster.glb",
     "/3d/work/velvett.glb",
     "/3d/work/dena.glb",
     "/3d/work/daiko.glb",
