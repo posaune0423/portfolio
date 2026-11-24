@@ -9,6 +9,8 @@
  * Meshes are intentionally not simplified: even a 0.01% error bound breaks the shading on the
  * sculpted SNS logo meshes (visible speckles on LinkedIn / X), so geometry stays lossless.
  *
+ * - Applies per-model material overrides (e.g. the Velvett "V" is shaded as solid gold)
+ *
  * Already optimized files (using EXT_meshopt_compression) are skipped, so the script is idempotent.
  *
  * Usage: bun scripts/optimize-models.ts [files...]
@@ -28,6 +30,39 @@ const MODEL_ROOT = "public/3d";
 const MAX_TEXTURE_SIZE = 1024;
 const WEBP_QUALITY = 90;
 const FLAT_STDEV_THRESHOLD = 0.5;
+
+interface MaterialOverride {
+  /** sRGB hex color; replaces the base color and metallic-roughness textures. */
+  baseColor: string;
+  metallic: number;
+  roughness: number;
+}
+
+const MATERIAL_OVERRIDES: Record<string, MaterialOverride> = {
+  // The scanned texture is near-white and fully metallic, which renders as dull grey without an env map.
+  "public/3d/work/velvett.glb": { baseColor: "#F0AC2E", metallic: 0.25, roughness: 0.4 },
+};
+
+function srgbToLinear(channel: number) {
+  return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+}
+
+function hexToLinearRgba(hex: string): [number, number, number, number] {
+  const value = Number.parseInt(hex.slice(1), 16);
+  const [r, g, b] = [value >> 16, (value >> 8) % 256, value % 256].map((channel) => srgbToLinear(channel / 255));
+  return [r, g, b, 1];
+}
+
+function applyMaterialOverride(document: Document, override: MaterialOverride) {
+  for (const material of document.getRoot().listMaterials()) {
+    material
+      .setBaseColorTexture(null)
+      .setMetallicRoughnessTexture(null)
+      .setBaseColorFactor(hexToLinearRgba(override.baseColor))
+      .setMetallicFactor(override.metallic)
+      .setRoughnessFactor(override.roughness);
+  }
+}
 
 function listModels(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -82,6 +117,8 @@ for (const path of targets) {
   draco?.dispose();
 
   await removeFlatNormalMaps(document);
+  const override = MATERIAL_OVERRIDES[path];
+  if (override) applyMaterialOverride(document, override);
   await document.transform(
     dedup(),
     prune(),
