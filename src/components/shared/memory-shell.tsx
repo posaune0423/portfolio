@@ -1,6 +1,5 @@
 "use client";
 
-import { useGLTF } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
@@ -11,8 +10,6 @@ import { WorkScreen } from "@/components/screens/work-screen";
 import Ps2BrowserBg, { PS2_BROWSER_BG_FALLBACK } from "@/components/shared/ps2-browser-bg";
 import { useViewport } from "@/components/shared/use-viewport";
 import type { AppScreenId } from "@/lib/app-screen";
-import { SCREEN_ASSETS } from "@/lib/app-screen";
-import { clearGLTF } from "@/lib/gltf-memory";
 
 interface MemoryShellProps {
   currentScreen: AppScreenId;
@@ -101,14 +98,6 @@ export default function MemoryShell({ currentScreen }: MemoryShellProps) {
 
     const timer = window.setTimeout(() => {
       setExitingScreen((screen) => (screen === previousScreen ? null : screen));
-
-      const prevAssets = SCREEN_ASSETS[previousScreen] ?? [];
-      const currAssets = new Set(SCREEN_ASSETS[currentScreen] ?? []);
-      for (const path of prevAssets) {
-        if (!currAssets.has(path)) {
-          clearGLTF(path, (p) => useGLTF.clear(p));
-        }
-      }
     }, LAYER_TRANSITION_MS + 50);
 
     return () => window.clearTimeout(timer);

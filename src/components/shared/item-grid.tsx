@@ -12,7 +12,6 @@ import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
 import type { ActiveIndexScreenId } from "@/lib/app-screen";
-import { registerGLTFScene } from "@/lib/gltf-memory";
 import { navigate } from "@/lib/navigate";
 
 export interface GridItem {
@@ -69,10 +68,6 @@ const CameraSetup = memo(function CameraSetup({ camPos }: { camPos: [number, num
 
 const GlbModel = memo(function GlbModel({ modelPath, isMobile }: { modelPath: string; isMobile: boolean }) {
   const { scene } = useGLTF(modelPath);
-
-  useEffect(() => {
-    registerGLTFScene(modelPath, scene);
-  }, [modelPath, scene]);
 
   const normalizedScale = useMemo(() => {
     const target = isMobile ? TARGET_SIZE_MOBILE : TARGET_SIZE;

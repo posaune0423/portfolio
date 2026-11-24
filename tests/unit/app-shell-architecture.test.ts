@@ -53,6 +53,16 @@ test("app shell owns navigation transitions, startup warmup, and waits for hydra
   assert.match(appShellSource, /fetch\(path, \{ cache: "force-cache" \}\)/);
 });
 
+test("app shell warms GLTF assets on every device and keeps them cached across screens", () => {
+  assert.doesNotMatch(appShellSource, /MOBILE_BREAKPOINT/);
+  assert.doesNotMatch(appShellSource, /startWarmup\(0\)/);
+  assert.doesNotMatch(appShellSource, /clearGLTF|useGLTF\.clear/);
+  assert.match(
+    appShellSource,
+    /const response = await fetch\(path, \{ cache: "force-cache" \}\);[\s\S]*useGLTF\.preload\(path\);/,
+  );
+});
+
 test("menu cluster keeps pages mounted and uses opacity fades instead of route-owned transitions", () => {
   assert.doesNotMatch(browserMenuSource, /useGLTF\.preload/);
   assert.doesNotMatch(browserMenuSource, /router\.prefetch/);
@@ -80,7 +90,7 @@ test("memory card grids stay in a persistent shell and rely on shell warmup inst
   assert.match(memoryShellSource, /opacity \$\{LAYER_TRANSITION_MS\}ms ease-out/);
   assert.match(memoryShellSource, /<MemoryShellBackground useCssFallback=\{compact\} \/>/);
   assert.match(memoryShellSource, /<Ps2BrowserBg \/>/);
-  assert.match(memoryShellSource, /clearGLTF\(path,/);
+  assert.doesNotMatch(memoryShellSource, /clearGLTF|useGLTF\.clear/);
   assert.doesNotMatch(browserScreenSource, /background:\s*PS2_BROWSER_BG_FALLBACK/);
   assert.doesNotMatch(browserScreenSource, /<Ps2BrowserBg \/>/);
   assert.doesNotMatch(itemGridSource, /background:\s*PS2_BROWSER_BG_FALLBACK/);
