@@ -12,7 +12,7 @@ import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
 import type { ActiveIndexScreenId } from "@/lib/app-screen";
-import { registerGLTFScene } from "@/lib/gltf-memory";
+import { clampFrameDelta } from "@/lib/frame-delta";
 import { navigate } from "@/lib/navigate";
 
 export interface GridItem {
@@ -69,10 +69,6 @@ const CameraSetup = memo(function CameraSetup({ camPos }: { camPos: [number, num
 
 const GlbModel = memo(function GlbModel({ modelPath, isMobile }: { modelPath: string; isMobile: boolean }) {
   const { scene } = useGLTF(modelPath);
-
-  useEffect(() => {
-    registerGLTFScene(modelPath, scene);
-  }, [modelPath, scene]);
 
   const normalizedScale = useMemo(() => {
     const target = isMobile ? TARGET_SIZE_MOBILE : TARGET_SIZE;
@@ -235,9 +231,10 @@ const GridItemModel = memo(function GridItemModel({
   useFrame((_, delta) => {
     const group = groupRef.current;
     if (!group) return;
+    const step = clampFrameDelta(delta);
 
     if (!settledRef.current) {
-      elapsed.current += delta;
+      elapsed.current += step;
       const t = Math.min(1, Math.max(0, (elapsed.current - delay) / ANIM_DURATION));
       const eased = easeOutCubic(t);
 
@@ -245,7 +242,7 @@ const GridItemModel = memo(function GridItemModel({
       group.scale.setScalar(eased);
 
       if (!modelPath && meshRef.current) {
-        meshRef.current.rotation.y += delta * 0.5;
+        meshRef.current.rotation.y += step * 0.5;
       }
 
       if (t < 1 || !modelPath) {
@@ -257,7 +254,7 @@ const GridItemModel = memo(function GridItemModel({
     }
 
     if (selectionPhase === "selecting" && isSelected) {
-      selectionElapsed.current += delta;
+      selectionElapsed.current += step;
       const t = Math.min(1, selectionElapsed.current / DETAIL_ANIM_DURATION);
       const eased = easeInOutCubic(t);
 
@@ -274,7 +271,7 @@ const GridItemModel = memo(function GridItemModel({
     }
 
     if (selectionPhase === "deselecting" && isSelected) {
-      selectionElapsed.current += delta;
+      selectionElapsed.current += step;
       const t = Math.min(1, selectionElapsed.current / DETAIL_ANIM_DURATION);
       const eased = easeInOutCubic(t);
 
@@ -294,14 +291,14 @@ const GridItemModel = memo(function GridItemModel({
       group.position.set(...detailPosition);
       group.scale.setScalar(detailScale);
       if (!modelPath && meshRef.current) {
-        meshRef.current.rotation.y += delta * 0.3;
+        meshRef.current.rotation.y += step * 0.3;
         invalidate();
       }
       return;
     }
 
     if (!modelPath && meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.5;
+      meshRef.current.rotation.y += step * 0.5;
       invalidate();
     }
   });
@@ -538,6 +535,34 @@ function DetailPanel({
   );
 }
 
+/** Horizontal stretch of `.ps2-text`; applied to the whole header row so layout matches what is painted. */
+const PS2_TEXT_SCALE_X = 1.18;
+const GRID_HEADER_LEFT = "clamp(20px, 5vw, 52px)";
+const GRID_HEADER_RIGHT = "clamp(20px, 8vw, 104px)";
+
+function getGridHeaderStyle(compact: boolean): React.CSSProperties {
+  // Phones reclaim the wider right gutter so both titles fit on one line.
+  const right = compact ? GRID_HEADER_LEFT : GRID_HEADER_RIGHT;
+  return {
+    position: "absolute",
+    top: "clamp(6px, 1.5vh, 16px)",
+    left: GRID_HEADER_LEFT,
+    width: `calc((100% - ${GRID_HEADER_LEFT} - ${right}) / ${PS2_TEXT_SCALE_X})`,
+    transform: `scaleX(${PS2_TEXT_SCALE_X})`,
+    transformOrigin: "left center",
+    pointerEvents: "none",
+    zIndex: 10,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: compact ? "8px" : "10px",
+  };
+}
+
+/** The row is stretched as a whole, so its text opts out of the per-element `.ps2-text` stretch. */
+const UNSCALED_TEXT_STYLE: React.CSSProperties = { transform: "none" };
+const UNSTRETCHED_ICON_STYLE: React.CSSProperties = { transform: `scaleX(${1 / PS2_TEXT_SCALE_X})` };
+
 export default function ItemGrid({ items, screenId, title, active = true }: ItemGridProps) {
   const { playEnter, playSelect, playBack } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
@@ -686,69 +711,50 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
       </Canvas>
       <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
 
-      <div
-        style={{
-          position: "absolute",
-          top: "clamp(6px, 1.5vh, 16px)",
-          left: "clamp(20px, 5vw, 52px)",
-          pointerEvents: "none",
-          zIndex: 10,
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "6px",
-          display: showGrid ? "flex" : "none",
-        }}
-      >
-        <div
-          style={{
-            width: compact ? 28 : 36,
-            height: compact ? 28 : 36,
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <MemoryCardImage size={compact ? 24 : 32} />
+      <div style={{ ...getGridHeaderStyle(compact), display: showGrid ? "flex" : "none" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: compact ? "4px" : "6px", flexShrink: 0 }}>
+          <div
+            style={{
+              width: compact ? 28 : 36,
+              height: compact ? 28 : 36,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              ...UNSTRETCHED_ICON_STYLE,
+            }}
+          >
+            <MemoryCardImage size={compact ? 24 : 32} />
+          </div>
+          <span
+            className="ps2-text"
+            style={{
+              ...UNSCALED_TEXT_STYLE,
+              fontSize: compact ? "clamp(12px, 3.3vw, 24px)" : "clamp(20px, 2.2vw, 32px)",
+              fontWeight: 700,
+              color: "#FFFFFF",
+              letterSpacing: "0.02em",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Memory Card ({title}) / 1
+          </span>
         </div>
-        <span
-          className="ps2-text"
-          style={{
-            fontSize: compact ? "clamp(14px, 3.6vw, 24px)" : "clamp(20px, 2.2vw, 32px)",
-            fontWeight: 700,
-            color: "#FFFFFF",
-            letterSpacing: "0.02em",
-            whiteSpace: "nowrap",
-            transformOrigin: "left center",
-            marginTop: 0,
-          }}
-        >
-          Memory Card ({title}) / 1
-        </span>
-      </div>
 
-      <div
-        style={{
-          position: "absolute",
-          top: "clamp(12px, 3vh, 32px)",
-          right: "clamp(36px, 8vw, 104px)",
-          pointerEvents: "none",
-          zIndex: 10,
-          maxWidth: "40vw",
-          display: showGrid ? "block" : "none",
-        }}
-      >
         <div
           className="ps2-text"
           style={{
-            fontSize: compact ? "clamp(15px, 3.8vw, 24px)" : "clamp(20px, 2.4vw, 34px)",
+            ...UNSCALED_TEXT_STYLE,
+            fontSize: compact ? "clamp(13px, 3.4vw, 24px)" : "clamp(20px, 2.4vw, 34px)",
             fontWeight: 700,
             color: "#C5CF1F",
             letterSpacing: "0.02em",
             lineHeight: 1.1,
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
             whiteSpace: "nowrap",
             textAlign: "right",
-            transformOrigin: "right center",
           }}
         >
           {items[activeIndex]?.label}
