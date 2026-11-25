@@ -22,10 +22,10 @@ export const SCREEN_ASSETS: Record<AppScreenId, readonly string[]> = {
   memoryWork: [
     "/3d/memorycard.glb",
     "/3d/work/luster.glb",
-    "/3d/work/velvett.glb",
-    "/3d/work/dena.glb",
     "/3d/work/daiko.glb",
     "/3d/work/doom.glb",
+    "/3d/work/velvett.glb",
+    "/3d/work/dena.glb",
   ],
   memorySns: [
     "/3d/memorycard.glb",
